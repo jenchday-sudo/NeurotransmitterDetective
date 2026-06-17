@@ -335,7 +335,7 @@ const CASES = [
   id: 8,
   tab: "CASE 08",
   patientName: "Liam Foster, 19",
-  complaint: "University student found having a generalized tonic-clonic seizure at a party. Roommate reports he abruptly stopped his prescribed anti-seizure medication a week ago to 'see if he still needed it.'",
+  complaint: "University student found having a generalized tonic-clonic seizure at a party. Roommate reports he abruptly stopped his prescribed inhibitory boosting anti-seizure medication a week ago to 'see if he still needed it.'",
   vitals: [
     ["Seizure type", "Generalized tonic-clonic, 90 seconds", true],
     ["Post-ictal state", "Confused, drowsy for ~20 min", true],
