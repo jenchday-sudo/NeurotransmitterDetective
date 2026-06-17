@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Files: Neuro Diagnostics Unit</title>
+<style>
+:root{
+  --ink: #1c1a17;
+  --paper: #ece6d8;
+  --paper-dark: #ddd3ba;
+  --manila: #d8c9a3;
+  --redact: #2a2622;
+  --evidence-red: #8a2e1f;
+  --evidence-red-bright: #b3432e;
+  --teal: #2f5d56;
+  --teal-bright: #3f7d72;
+  --gold: #a9842f;
+  --line: rgba(28,26,23,0.18);
+  --shadow: rgba(20,18,15,0.35);
+  --success: #2f6b3a;
+  --success-bg: #dde9d6;
+  --fail-bg: #ecd8d2;
+}
+
+* { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--redact);
+  color: var(--ink);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+}
+
+body {
+  background-image:
+    radial-gradient(ellipse at top left, rgba(255,255,255,0.03), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px);
+}
+
+#app {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 16px 60px;
+}
+
+/* ---------- Typography ---------- */
+@font-face {
+  font-family: 'Special Elite';
+  src: local('Special Elite');
+}
+
+.display {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  letter-spacing: 0.01em;
+}
+
+.stamp {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ---------- Header / Masthead ---------- */
+.masthead {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  position: relative;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.4);
+}
+
+.masthead::before {
+  content: "";
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px dashed var(--line);
+  pointer-events: none;
+}
+
+.masthead-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.masthead-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.masthead-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--evidence-red);
+  font-weight: 700;
+}
+
+.case-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+
+.case-meta span { color: #4a443c; }
+.case-meta b { color: var(--ink); }
+
+/* progress dots */
+.case-tracker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.case-dot {
+  width: 26px; height: 26px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--paper-dark);
+  color: var(--ink);
+  cursor: default;
+}
+.case-dot.solved { background: var(--success); color: var(--paper); border-color: var(--success); }
+.case-dot.current { background: var(--evidence-red); color: var(--paper); border-color: var(--evidence-red); transform: scale(1.12); }
+.case-dot.locked { opacity: 0.45; }
+
+/* ---------- Screens ---------- */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ---------- Intro ---------- */
+.intro-card {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 26px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.4);
+}
+.intro-card h2 { margin-top: 0; }
+.intro-card p { line-height: 1.6; }
+.nt-roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+.nt-chip {
+  border: 1.5px solid var(--ink);
+  padding: 10px 12px;
+  background: var(--paper-dark);
+  font-size: 0.78rem;
+}
+.nt-chip b { display: block; font-size: 0.85rem; margin-bottom: 2px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  padding: 12px 20px;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 rgba(0,0,0,0.4); }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+.btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.btn.secondary { background: var(--paper); color: var(--ink); }
+.btn.teal { background: var(--teal); border-color: var(--teal); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ---------- Case Layout ---------- */
+.case-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+@media (max-width: 760px) {
+  .case-grid { grid-template-columns: 1fr; }
+}
+
+.folder {
+  background: var(--manila);
+  border: 2px solid var(--ink);
+  padding: 18px;
+  position: relative;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+}
+.folder-tab {
+  position: absolute;
+  top: -16px; left: 18px;
+  background: var(--evidence-red);
+  color: var(--paper);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+}
+
+.report-block { margin-bottom: 14px; }
+.report-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--evidence-red);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.report-text { line-height: 1.55; font-size: 0.92rem; }
+
+.vitals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+.vitals-table td {
+  border: 1px solid var(--line);
+  padding: 5px 8px;
+}
+.vitals-table td:first-child { font-weight: 700; width: 45%; }
+.vitals-table td.flag { color: var(--evidence-red); font-weight: 700; }
+
+/* ---------- Interview Panel ---------- */
+.interview-panel {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+  min-height: 360px;
+}
+.interview-header {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 320px;
+  padding-right: 4px;
+  margin-bottom: 12px;
+}
+.line { margin-bottom: 12px; font-size: 0.88rem; line-height: 1.5; }
+.line .who { font-weight: 700; }
+.line.detective .who { color: var(--teal); }
+.line.witness .who { color: var(--evidence-red); }
+
+.question-list { display: flex; flex-direction: column; gap: 8px; }
+.q-btn {
+  text-align: left;
+  font-family: inherit;
+  background: var(--paper-dark);
+  border: 1.5px solid var(--ink);
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.q-btn:hover { background: var(--gold); color: var(--paper); }
+.q-btn:focus-visible { outline: 3px solid var(--teal); outline-offset: 1px; }
+.q-btn:disabled { opacity: 0.35; cursor: not-allowed; background: var(--paper-dark); color: var(--ink); }
+.q-btn .tick { color: var(--success); font-weight: 700; margin-right: 6px; }
+
+/* ---------- Evidence Locker ---------- */
+.locker {
+  margin-top: 14px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 16px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+}
+.locker-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 6px;
+}
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 8px;
+}
+.evidence-card {
+  border: 1.5px dashed var(--line);
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  background: var(--paper-dark);
+  opacity: 0.4;
+}
+.evidence-card.collected {
+  opacity: 1;
+  border: 1.5px solid var(--evidence-red);
+  background: #f5efe0;
+}
+.evidence-card b { display:block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--evidence-red); margin-bottom: 2px;}
+
+/* ---------- Diagnosis Panel ---------- */
+.diagnosis-panel {
+  margin-top: 16px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 18px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+}
+.diagnosis-title {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.diagnosis-sub { font-size: 0.78rem; opacity: 0.8; margin-bottom: 12px; }
+
+.nt-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.nt-option {
+  font-family: inherit;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: var(--paper);
+  padding: 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 700;
+}
+.nt-option.selected { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.nt-option:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.direction-options {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.dir-option {
+  flex: 1;
+  font-family: inherit;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: var(--paper);
+  padding: 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+.dir-option.selected { background: var(--teal-bright); border-color: var(--teal-bright); }
+.dir-option:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+textarea.reasoning {
+  width: 100%;
+  font-family: inherit;
+  background: rgba(255,255,255,0.06);
+  color: var(--paper);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  padding: 10px;
+  font-size: 0.82rem;
+  min-height: 70px;
+  margin-bottom: 14px;
+  resize: vertical;
+}
+textarea.reasoning::placeholder { color: rgba(255,255,255,0.4); }
+
+/* ---------- Feedback ---------- */
+.feedback {
+  margin-top: 14px;
+  border: 2px solid var(--ink);
+  padding: 18px;
+}
+.feedback.correct { background: var(--success-bg); }
+.feedback.incorrect { background: var(--fail-bg); }
+.feedback-verdict {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.feedback.correct .feedback-verdict { color: var(--success); }
+.feedback.incorrect .feedback-verdict { color: var(--evidence-red); }
+.feedback-body { line-height: 1.6; font-size: 0.9rem; }
+.score-line {
+  font-size: 0.88rem;
+  background: rgba(255,255,255,0.5);
+  border: 1.5px solid var(--ink);
+  padding: 8px 12px;
+  margin: 0 0 12px;
+  display: inline-block;
+}
+.feedback-body h4 { margin: 12px 0 4px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.clue-list { padding-left: 18px; margin: 4px 0; }
+.clue-list li { margin-bottom: 5px; font-size: 0.88rem; }
+
+.action-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ---------- Final screen ---------- */
+.final-card {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.4);
+}
+.final-score {
+  font-size: 3rem;
+  font-weight: 700;
+  font-family: Georgia, serif;
+  margin: 10px 0 2px;
+}
+.final-points {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--teal);
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.rank-badge {
+  display: inline-block;
+  border: 2px solid var(--ink);
+  padding: 8px 18px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  margin: 10px 0 18px;
+  background: var(--gold);
+}
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.82rem;
+  text-align: left;
+}
+.summary-table th, .summary-table td {
+  border: 1px solid var(--line);
+  padding: 6px 9px;
+}
+.summary-table th { background: var(--paper-dark); }
+.summary-table td.right, .summary-table th.right { text-align: center; }
+.tag-correct { color: var(--success); font-weight: 700; }
+.tag-incorrect { color: var(--evidence-red); font-weight: 700; }
+
+/* scrollbar (light touch) */
+.transcript::-webkit-scrollbar { width: 8px; }
+.transcript::-webkit-scrollbar-thumb { background: var(--line); }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+}
+
+@media (max-width: 480px) {
+  .masthead-title { font-size: 1.4rem; }
+  .direction-options { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="masthead">
+    <div class="masthead-top">
+      <h1 class="masthead-title display">NEURO DIAGNOSTICS UNIT</h1>
+      <div class="masthead-sub">Confidential Case Archive</div>
+    </div>
+    <div class="case-meta">
+      <span>Detective: <b id="detective-name">Unassigned</b></span>
+      <span>Cases solved: <b id="header-solved">0</b> / <b id="header-total">8</b></span>
+      <span>Score: <b id="header-score">0 pts</b></span>
+      <span>Status: <b id="header-status">Awaiting assignment</b></span>
+    </div>
+    <div class="case-tracker" id="case-tracker" aria-label="Case progress"></div>
+  </header>
+
+  <!-- ============ INTRO SCREEN ============ -->
+  <section class="screen active" id="screen-intro">
+    <div class="intro-card">
+      <div class="masthead-sub" style="margin-bottom:8px;">Briefing</div>
+      <h2 class="display">You've been assigned to the Neuro Diagnostics Unit.</h2>
+      <p>Eight patients have come through the unit this week, each with a story that doesn't quite add up. Your job isn't to treat them &mdash; it's to <b>read the evidence, interview the witness, and identify which neurotransmitter system is behind what's happening</b>, and whether that system has too little signal or too much.</p>
+      <p>Every case gives you a <b>patient report</b>, a chance to <b>ask the witness questions</b>, and an <b>evidence locker</b> that fills in as you investigate. Nothing is wasted: the more questions you ask, the more clues you'll have when it's time to file your diagnosis.</p>
+
+      <div class="nt-roster" id="nt-roster"></div>
+
+      <p style="font-size:0.85rem; color:#4a443c;">Enter a name for the case file, then open Case #1 when you're ready.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+        <input id="name-input" type="text" placeholder="Detective's name" style="font-family:inherit; padding:11px 12px; border:2px solid var(--ink); font-size:0.85rem; flex:1; min-width:180px;">
+        <button class="btn" id="btn-start">Open Case File →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CASE SCREEN ============ -->
+  <section class="screen" id="screen-case">
+    <div class="folder" style="margin-bottom:0;">
+      <span class="folder-tab" id="case-tab">CASE 01</span>
+      <div class="report-block">
+        <div class="report-label">Patient</div>
+        <div class="report-text" id="case-patient-line"></div>
+      </div>
+      <div class="report-block">
+        <div class="report-label">Presenting Complaint</div>
+        <div class="report-text" id="case-complaint"></div>
+      </div>
+      <div class="report-block">
+        <div class="report-label">Observed Vitals &amp; Exam Notes</div>
+        <table class="vitals-table" id="case-vitals"></table>
+      </div>
+    </div>
+
+    <div class="case-grid">
+      <div class="interview-panel">
+        <div class="interview-header"><span>Witness Interview</span><span id="q-counter">0/0 asked</span></div>
+        <div class="transcript" id="transcript" role="log" aria-live="polite"></div>
+        <div class="question-list" id="question-list"></div>
+      </div>
+
+      <div>
+        <div class="locker">
+          <div class="locker-title">Evidence Locker</div>
+          <div class="evidence-grid" id="evidence-grid"></div>
+        </div>
+        <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+          <button class="btn" id="btn-to-diagnosis">File Diagnosis →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnosis panel (hidden until requested) -->
+    <div class="diagnosis-panel" id="diagnosis-panel" style="display:none;">
+      <div class="diagnosis-title">File Your Diagnosis</div>
+      <div class="diagnosis-sub">Step 1 &mdash; Which neurotransmitter system is responsible?</div>
+      <div class="nt-options" id="nt-options"></div>
+
+      <div class="diagnosis-sub">Step 2 &mdash; Is signalling too high or too low?</div>
+      <div class="direction-options" id="direction-options">
+        <button class="dir-option" data-dir="low">Deficiency (too little)</button>
+        <button class="dir-option" data-dir="high">Excess (too much)</button>
+      </div>
+
+      <div class="diagnosis-sub">Step 3 &mdash; What's your reasoning? (cite the clues that convinced you)</div>
+      <textarea class="reasoning" id="reasoning-input" placeholder="e.g. The resting tremor and shuffling gait point to a movement-control pathway, and the patient's L-DOPA prescription confirms it..."></textarea>
+
+      <button class="btn teal" id="btn-submit-diagnosis">Submit Diagnosis</button>
+    </div>
+
+    <!-- Feedback -->
+    <div class="feedback" id="feedback-panel" style="display:none;"></div>
+  </section>
+
+  <!-- ============ FINAL SCREEN ============ -->
+  <section class="screen" id="screen-final">
+    <div class="final-card">
+      <div class="masthead-sub">Unit Performance Review</div>
+      <h2 class="display" id="final-headline">Case Archive Closed</h2>
+      <div class="final-score" id="final-score">0/8</div>
+      <div class="final-points" id="final-points">0 / 800 points</div>
+      <div class="rank-badge" id="final-rank">RANK</div>
+      <p id="final-comment" style="line-height:1.6;"></p>
+      <table class="summary-table">
+        <thead><tr><th>Case</th><th>Patient</th><th class="right">Your call</th><th class="right">Questions asked</th><th class="right">Points</th><th class="right">Result</th></tr></thead>
+        <tbody id="final-table-body"></tbody>
+      </table>
+      <div class="action-row" style="justify-content:center;">
+        <button class="btn secondary" id="btn-restart">Restart Investigation</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
